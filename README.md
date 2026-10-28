@@ -22,7 +22,7 @@ It is made for people who build decoys, honeypots, scanners and detection tools 
 
 ## Current state
 
-Columbo ships with its first database release. Release v1 contains 2 fingerprint entries captured by the project from real systems: `win11-fwon` (Windows 11 with the firewall on) and `win11-fwoff` (Windows 11 with the firewall off). Each entry carries its provenance and passed the same quality and security checks that every later contribution must pass. The database is a versioned release with a checksum and a signature, published by the maintainer.
+The first database release (v1) is being prepared and is not published yet.
 
 More systems are on the way. The tool that prepares a capture bundle for submission is not ready yet, so bundle submissions open when it ships. Until then, the most useful things you can do are review the check rules in `docs/`, tell us what is missing, and introduce yourself.
 
