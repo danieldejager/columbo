@@ -1,0 +1,1164 @@
+{
+ "run_id": "78190a22-1da2-41bc-91b4-e67f834382f7",
+ "run_index": 0,
+ "tool_version": "0.3.2",
+ "tool": "probe",
+ "target": "192.0.2.1",
+ "ports": {
+  "open_tcp": 3389,
+  "closed_tcp": 1,
+  "closed_udp": 40000
+ },
+ "exchanges": [
+  {
+   "sent": {
+    "hex": "4500003c5b9d000040069b1bc0000202c0000201a7010d3d62ca95350100b2c4a00200015afe000003030a01020405b4080affffffff000000000402",
+    "len": 60
+   },
+   "sent_parsed": {
+    "ip_src": "192.0.2.2",
+    "ip_dst": "192.0.2.1",
+    "ip_id": 23453,
+    "ip_ttl": 64,
+    "ip_tos": 0,
+    "ip_df": false,
+    "ip_len": 60,
+    "l4": "tcp",
+    "sport": 42753,
+    "dport": 3389,
+    "seq": 1657443637,
+    "ack": 16822980,
+    "window": 1,
+    "flags": "S",
+    "flags_bits": 2,
+    "options": "WANM5B4T10S",
+    "options_raw": [
+     [
+      "WScale",
+      10
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "MSS",
+      1460
+     ],
+     [
+      "Timestamp",
+      [
+       4294967295,
+       0
+      ]
+     ],
+     [
+      "SAckOK",
+      ""
+     ]
+    ],
+    "reserved": 0,
+    "urgptr": 0
+   },
+   "name": "SEQ1",
+   "kind": "syn_seq",
+   "gap_before_sec": 0.0,
+   "sent_at_offset_sec": 0.062319,
+   "reply": {
+    "hex": "4500003ce05c40008006965bc0000201c00002020d3da701f2e807c662ca9536a012fa00bbf80000020405b4010303000402080a18d74e34ffffffff",
+    "len": 60
+   },
+   "reply_parsed": {
+    "ip_src": "192.0.2.1",
+    "ip_dst": "192.0.2.2",
+    "ip_id": 57436,
+    "ip_ttl": 128,
+    "ip_tos": 0,
+    "ip_df": true,
+    "ip_len": 60,
+    "l4": "tcp",
+    "sport": 3389,
+    "dport": 42753,
+    "seq": 4075292614,
+    "ack": 1657443638,
+    "window": 64000,
+    "flags": "SA",
+    "flags_bits": 18,
+    "options": "M5B4NW0ST11",
+    "options_raw": [
+     [
+      "MSS",
+      1460
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "WScale",
+      0
+     ],
+     [
+      "SAckOK",
+      ""
+     ],
+     [
+      "Timestamp",
+      [
+       416763444,
+       4294967295
+      ]
+     ]
+    ],
+    "reserved": 0,
+    "urgptr": 0
+   },
+   "timeout": false
+  },
+  {
+   "sent": {
+    "hex": "4500003c5b9e000040069b1ac0000202c0000201a7020d3d6f47bf6e0100b2c4a002003f2e460000020405780303000402080affffffff0000000000",
+    "len": 60
+   },
+   "sent_parsed": {
+    "ip_src": "192.0.2.2",
+    "ip_dst": "192.0.2.1",
+    "ip_id": 23454,
+    "ip_ttl": 64,
+    "ip_tos": 0,
+    "ip_df": false,
+    "ip_len": 60,
+    "l4": "tcp",
+    "sport": 42754,
+    "dport": 3389,
+    "seq": 1866973038,
+    "ack": 16822980,
+    "window": 63,
+    "flags": "S",
+    "flags_bits": 2,
+    "options": "M578W0ST10L",
+    "options_raw": [
+     [
+      "MSS",
+      1400
+     ],
+     [
+      "WScale",
+      0
+     ],
+     [
+      "SAckOK",
+      ""
+     ],
+     [
+      "Timestamp",
+      [
+       4294967295,
+       0
+      ]
+     ],
+     [
+      "EOL",
+      null
+     ]
+    ],
+    "reserved": 0,
+    "urgptr": 0
+   },
+   "name": "SEQ2",
+   "kind": "syn_seq",
+   "gap_before_sec": 0.1,
+   "sent_at_offset_sec": 0.163876,
+   "reply": {
+    "hex": "4500003ce05d40008006965ac0000201c00002020d3da70253b162306f47bf6fa012fa00c9a80000020405b4010303000402080a18d74e9affffffff",
+    "len": 60
+   },
+   "reply_parsed": {
+    "ip_src": "192.0.2.1",
+    "ip_dst": "192.0.2.2",
+    "ip_id": 57437,
+    "ip_ttl": 128,
+    "ip_tos": 0,
+    "ip_df": true,
+    "ip_len": 60,
+    "l4": "tcp",
+    "sport": 3389,
+    "dport": 42754,
+    "seq": 1404133936,
+    "ack": 1866973039,
+    "window": 64000,
+    "flags": "SA",
+    "flags_bits": 18,
+    "options": "M5B4NW0ST11",
+    "options_raw": [
+     [
+      "MSS",
+      1460
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "WScale",
+      0
+     ],
+     [
+      "SAckOK",
+      ""
+     ],
+     [
+      "Timestamp",
+      [
+       416763546,
+       4294967295
+      ]
+     ]
+    ],
+    "reserved": 0,
+    "urgptr": 0
+   },
+   "timeout": false
+  },
+  {
+   "sent": {
+    "hex": "4500003c5b9f000040069b19c0000202c0000201a7030d3d781c821e0100b2c4a002000463f30000080affffffff0000000001010303050102040280",
+    "len": 60
+   },
+   "sent_parsed": {
+    "ip_src": "192.0.2.2",
+    "ip_dst": "192.0.2.1",
+    "ip_id": 23455,
+    "ip_ttl": 64,
+    "ip_tos": 0,
+    "ip_df": false,
+    "ip_len": 60,
+    "l4": "tcp",
+    "sport": 42755,
+    "dport": 3389,
+    "seq": 2015134238,
+    "ack": 16822980,
+    "window": 4,
+    "flags": "S",
+    "flags_bits": 2,
+    "options": "T10NNW5NM280",
+    "options_raw": [
+     [
+      "Timestamp",
+      [
+       4294967295,
+       0
+      ]
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "WScale",
+      5
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "MSS",
+      640
+     ]
+    ],
+    "reserved": 0,
+    "urgptr": 0
+   },
+   "name": "SEQ3",
+   "kind": "syn_seq",
+   "gap_before_sec": 0.1,
+   "sent_at_offset_sec": 0.269597,
+   "reply": {
+    "hex": "4500003ce05e400080069659c0000201c00002020d3da703dd09eceb781c821fa012fa00eca60000020405b4010303000101080a18d74f03ffffffff",
+    "len": 60
+   },
+   "reply_parsed": {
+    "ip_src": "192.0.2.1",
+    "ip_dst": "192.0.2.2",
+    "ip_id": 57438,
+    "ip_ttl": 128,
+    "ip_tos": 0,
+    "ip_df": true,
+    "ip_len": 60,
+    "l4": "tcp",
+    "sport": 3389,
+    "dport": 42755,
+    "seq": 3708415211,
+    "ack": 2015134239,
+    "window": 64000,
+    "flags": "SA",
+    "flags_bits": 18,
+    "options": "M5B4NW0NNT11",
+    "options_raw": [
+     [
+      "MSS",
+      1460
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "WScale",
+      0
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "Timestamp",
+      [
+       416763651,
+       4294967295
+      ]
+     ]
+    ],
+    "reserved": 0,
+    "urgptr": 0
+   },
+   "timeout": false
+  },
+  {
+   "sent": {
+    "hex": "450000385ba0000040069b1cc0000202c0000201a7040d3d0fdbf9800100b2c490020004615900000402080affffffff0000000003030a00",
+    "len": 56
+   },
+   "sent_parsed": {
+    "ip_src": "192.0.2.2",
+    "ip_dst": "192.0.2.1",
+    "ip_id": 23456,
+    "ip_ttl": 64,
+    "ip_tos": 0,
+    "ip_df": false,
+    "ip_len": 56,
+    "l4": "tcp",
+    "sport": 42756,
+    "dport": 3389,
+    "seq": 266074496,
+    "ack": 16822980,
+    "window": 4,
+    "flags": "S",
+    "flags_bits": 2,
+    "options": "ST10WAL",
+    "options_raw": [
+     [
+      "SAckOK",
+      ""
+     ],
+     [
+      "Timestamp",
+      [
+       4294967295,
+       0
+      ]
+     ],
+     [
+      "WScale",
+      10
+     ],
+     [
+      "EOL",
+      null
+     ]
+    ],
+    "reserved": 0,
+    "urgptr": 0
+   },
+   "name": "SEQ4",
+   "kind": "syn_seq",
+   "gap_before_sec": 0.1,
+   "sent_at_offset_sec": 0.37354,
+   "reply": {
+    "hex": "4500003ce05f400080069658c0000201c00002020d3da7040ca0d8850fdbf981a012fa00beeb0000020405b4010303000402080a18d74f6bffffffff",
+    "len": 60
+   },
+   "reply_parsed": {
+    "ip_src": "192.0.2.1",
+    "ip_dst": "192.0.2.2",
+    "ip_id": 57439,
+    "ip_ttl": 128,
+    "ip_tos": 0,
+    "ip_df": true,
+    "ip_len": 60,
+    "l4": "tcp",
+    "sport": 3389,
+    "dport": 42756,
+    "seq": 211867781,
+    "ack": 266074497,
+    "window": 64000,
+    "flags": "SA",
+    "flags_bits": 18,
+    "options": "M5B4NW0ST11",
+    "options_raw": [
+     [
+      "MSS",
+      1460
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "WScale",
+      0
+     ],
+     [
+      "SAckOK",
+      ""
+     ],
+     [
+      "Timestamp",
+      [
+       416763755,
+       4294967295
+      ]
+     ]
+    ],
+    "reserved": 0,
+    "urgptr": 0
+   },
+   "timeout": false
+  },
+  {
+   "sent": {
+    "hex": "4500003c5ba1000040069b17c0000202c0000201a7050d3d515cebd20100b2c4a002001019590000020402180402080affffffff0000000003030a00",
+    "len": 60
+   },
+   "sent_parsed": {
+    "ip_src": "192.0.2.2",
+    "ip_dst": "192.0.2.1",
+    "ip_id": 23457,
+    "ip_ttl": 64,
+    "ip_tos": 0,
+    "ip_df": false,
+    "ip_len": 60,
+    "l4": "tcp",
+    "sport": 42757,
+    "dport": 3389,
+    "seq": 1365044178,
+    "ack": 16822980,
+    "window": 16,
+    "flags": "S",
+    "flags_bits": 2,
+    "options": "M218ST10WAL",
+    "options_raw": [
+     [
+      "MSS",
+      536
+     ],
+     [
+      "SAckOK",
+      ""
+     ],
+     [
+      "Timestamp",
+      [
+       4294967295,
+       0
+      ]
+     ],
+     [
+      "WScale",
+      10
+     ],
+     [
+      "EOL",
+      null
+     ]
+    ],
+    "reserved": 0,
+    "urgptr": 0
+   },
+   "name": "SEQ5",
+   "kind": "syn_seq",
+   "gap_before_sec": 0.1,
+   "sent_at_offset_sec": 0.479395,
+   "reply": {
+    "hex": "4500003ce060400080069657c0000201c00002020d3da705ad9f4827515cebd3a012fa007a0c0000020405b4010303000402080a18d74fd5ffffffff",
+    "len": 60
+   },
+   "reply_parsed": {
+    "ip_src": "192.0.2.1",
+    "ip_dst": "192.0.2.2",
+    "ip_id": 57440,
+    "ip_ttl": 128,
+    "ip_tos": 0,
+    "ip_df": true,
+    "ip_len": 60,
+    "l4": "tcp",
+    "sport": 3389,
+    "dport": 42757,
+    "seq": 2912897063,
+    "ack": 1365044179,
+    "window": 64000,
+    "flags": "SA",
+    "flags_bits": 18,
+    "options": "M5B4NW0ST11",
+    "options_raw": [
+     [
+      "MSS",
+      1460
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "WScale",
+      0
+     ],
+     [
+      "SAckOK",
+      ""
+     ],
+     [
+      "Timestamp",
+      [
+       416763861,
+       4294967295
+      ]
+     ]
+    ],
+    "reserved": 0,
+    "urgptr": 0
+   },
+   "timeout": false
+  },
+  {
+   "sent": {
+    "hex": "450000385ba2000040069b1ac0000202c0000201a7060d3d047a612e0100b2c4900202000d050000020401090402080affffffff00000000",
+    "len": 56
+   },
+   "sent_parsed": {
+    "ip_src": "192.0.2.2",
+    "ip_dst": "192.0.2.1",
+    "ip_id": 23458,
+    "ip_ttl": 64,
+    "ip_tos": 0,
+    "ip_df": false,
+    "ip_len": 56,
+    "l4": "tcp",
+    "sport": 42758,
+    "dport": 3389,
+    "seq": 75129134,
+    "ack": 16822980,
+    "window": 512,
+    "flags": "S",
+    "flags_bits": 2,
+    "options": "M109ST10",
+    "options_raw": [
+     [
+      "MSS",
+      265
+     ],
+     [
+      "SAckOK",
+      ""
+     ],
+     [
+      "Timestamp",
+      [
+       4294967295,
+       0
+      ]
+     ]
+    ],
+    "reserved": 0,
+    "urgptr": 0
+   },
+   "name": "SEQ6",
+   "kind": "syn_seq",
+   "gap_before_sec": 0.1,
+   "sent_at_offset_sec": 0.583357,
+   "reply": {
+    "hex": "45000038e06100008006d65ac0000201c00002020d3da70604ab143d047a612f9012fa0042100000020405b40402080a18d7503dffffffff",
+    "len": 56
+   },
+   "reply_parsed": {
+    "ip_src": "192.0.2.1",
+    "ip_dst": "192.0.2.2",
+    "ip_id": 57441,
+    "ip_ttl": 128,
+    "ip_tos": 0,
+    "ip_df": false,
+    "ip_len": 56,
+    "l4": "tcp",
+    "sport": 3389,
+    "dport": 42758,
+    "seq": 78320701,
+    "ack": 75129135,
+    "window": 64000,
+    "flags": "SA",
+    "flags_bits": 18,
+    "options": "M5B4ST11",
+    "options_raw": [
+     [
+      "MSS",
+      1460
+     ],
+     [
+      "SAckOK",
+      ""
+     ],
+     [
+      "Timestamp",
+      [
+       416763965,
+       4294967295
+      ]
+     ]
+    ],
+    "reserved": 0,
+    "urgptr": 0
+   },
+   "timeout": false
+  },
+  {
+   "sent": {
+    "hex": "450000945ba3400040015ac2c0000202c00002010809f7f600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "len": 148
+   },
+   "sent_parsed": {
+    "ip_src": "192.0.2.2",
+    "ip_dst": "192.0.2.1",
+    "ip_id": 23459,
+    "ip_ttl": 64,
+    "ip_tos": 0,
+    "ip_df": true,
+    "ip_len": 148,
+    "l4": "icmp",
+    "icmp_type": 8,
+    "icmp_code": 9,
+    "icmp_unused": 0
+   },
+   "name": "IE1",
+   "kind": "icmp",
+   "gap_before_sec": 0.2,
+   "sent_at_offset_sec": 2.848935,
+   "reply": null,
+   "reply_parsed": null,
+   "timeout": true
+  },
+  {
+   "sent": {
+    "hex": "450400b25ba4000040019a9fc0000202c00002010800f7ff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "len": 178
+   },
+   "sent_parsed": {
+    "ip_src": "192.0.2.2",
+    "ip_dst": "192.0.2.1",
+    "ip_id": 23460,
+    "ip_ttl": 64,
+    "ip_tos": 4,
+    "ip_df": false,
+    "ip_len": 178,
+    "l4": "icmp",
+    "icmp_type": 8,
+    "icmp_code": 0,
+    "icmp_unused": 0
+   },
+   "name": "IE2",
+   "kind": "icmp",
+   "gap_before_sec": 0.0,
+   "sent_at_offset_sec": 2.849482,
+   "reply": null,
+   "reply_parsed": null,
+   "timeout": true
+  },
+  {
+   "sent": {
+    "hex": "45000148104200004011e55fc0000202c0000201a7099c400134ccce434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343434343",
+    "len": 328
+   },
+   "sent_parsed": {
+    "ip_src": "192.0.2.2",
+    "ip_dst": "192.0.2.1",
+    "ip_id": 4162,
+    "ip_ttl": 64,
+    "ip_tos": 0,
+    "ip_df": false,
+    "ip_len": 328,
+    "l4": "udp",
+    "sport": 42761,
+    "dport": 40000
+   },
+   "name": "U1",
+   "kind": "udp",
+   "gap_before_sec": 0.2,
+   "sent_at_offset_sec": 5.118783,
+   "reply": null,
+   "reply_parsed": null,
+   "timeout": true
+  },
+  {
+   "sent": {
+    "hex": "450000345ba6000040069b1ac0000202c0000201a70a0d3d4d83b1480000000088c200032e47f7f503030a01020405b404020101",
+    "len": 52
+   },
+   "sent_parsed": {
+    "ip_src": "192.0.2.2",
+    "ip_dst": "192.0.2.1",
+    "ip_id": 23462,
+    "ip_ttl": 64,
+    "ip_tos": 0,
+    "ip_df": false,
+    "ip_len": 52,
+    "l4": "tcp",
+    "sport": 42762,
+    "dport": 3389,
+    "seq": 1300476232,
+    "ack": 0,
+    "window": 3,
+    "flags": "SEC",
+    "flags_bits": 194,
+    "options": "WANM5B4SNN",
+    "options_raw": [
+     [
+      "WScale",
+      10
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "MSS",
+      1460
+     ],
+     [
+      "SAckOK",
+      ""
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "NOP",
+      null
+     ]
+    ],
+    "reserved": 4,
+    "urgptr": 63477
+   },
+   "name": "ECN",
+   "kind": "ecn",
+   "gap_before_sec": 0.2,
+   "sent_at_offset_sec": 7.380549,
+   "reply": {
+    "hex": "45000034e06240008006965dc0000201c00002020d3da70a9fd1a3074d83b1498012fa00fb150000020405b40103030001010402",
+    "len": 52
+   },
+   "reply_parsed": {
+    "ip_src": "192.0.2.1",
+    "ip_dst": "192.0.2.2",
+    "ip_id": 57442,
+    "ip_ttl": 128,
+    "ip_tos": 0,
+    "ip_df": true,
+    "ip_len": 52,
+    "l4": "tcp",
+    "sport": 3389,
+    "dport": 42762,
+    "seq": 2681316103,
+    "ack": 1300476233,
+    "window": 64000,
+    "flags": "SA",
+    "flags_bits": 18,
+    "options": "M5B4NW0NNS",
+    "options_raw": [
+     [
+      "MSS",
+      1460
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "WScale",
+      0
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "SAckOK",
+      ""
+     ]
+    ],
+    "reserved": 0,
+    "urgptr": 0
+   },
+   "timeout": false
+  },
+  {
+   "sent": {
+    "hex": "4500003c5ba7400040065b11c0000202c0000201a70b0d3d230e2ae50100b2c4a0000080092f000003030a0102040109080affffffff000000000402",
+    "len": 60
+   },
+   "sent_parsed": {
+    "ip_src": "192.0.2.2",
+    "ip_dst": "192.0.2.1",
+    "ip_id": 23463,
+    "ip_ttl": 64,
+    "ip_tos": 0,
+    "ip_df": true,
+    "ip_len": 60,
+    "l4": "tcp",
+    "sport": 42763,
+    "dport": 3389,
+    "seq": 588131045,
+    "ack": 16822980,
+    "window": 128,
+    "flags": "",
+    "flags_bits": 0,
+    "options": "WANM109T10S",
+    "options_raw": [
+     [
+      "WScale",
+      10
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "MSS",
+      265
+     ],
+     [
+      "Timestamp",
+      [
+       4294967295,
+       0
+      ]
+     ],
+     [
+      "SAckOK",
+      ""
+     ]
+    ],
+    "reserved": 0,
+    "urgptr": 0
+   },
+   "name": "T2",
+   "kind": "tcp_unusual",
+   "gap_before_sec": 0.2,
+   "sent_at_offset_sec": 9.648033,
+   "reply": null,
+   "reply_parsed": null,
+   "timeout": true
+  },
+  {
+   "sent": {
+    "hex": "4500003c5ba8000040069b10c0000202c0000201a70c0d3dc0578b870100b2c4a02b01000a97000003030a0102040109080affffffff000000000402",
+    "len": 60
+   },
+   "sent_parsed": {
+    "ip_src": "192.0.2.2",
+    "ip_dst": "192.0.2.1",
+    "ip_id": 23464,
+    "ip_ttl": 64,
+    "ip_tos": 0,
+    "ip_df": false,
+    "ip_len": 60,
+    "l4": "tcp",
+    "sport": 42764,
+    "dport": 3389,
+    "seq": 3226962823,
+    "ack": 16822980,
+    "window": 256,
+    "flags": "FSPU",
+    "flags_bits": 43,
+    "options": "WANM109T10S",
+    "options_raw": [
+     [
+      "WScale",
+      10
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "MSS",
+      265
+     ],
+     [
+      "Timestamp",
+      [
+       4294967295,
+       0
+      ]
+     ],
+     [
+      "SAckOK",
+      ""
+     ]
+    ],
+    "reserved": 0,
+    "urgptr": 0
+   },
+   "name": "T3",
+   "kind": "tcp_unusual",
+   "gap_before_sec": 0.2,
+   "sent_at_offset_sec": 11.920281,
+   "reply": null,
+   "reply_parsed": null,
+   "timeout": true
+  },
+  {
+   "sent": {
+    "hex": "4500003c5ba9400040065b0fc0000202c0000201a70d0d3d3114e80f0100b2c4a01004003a6c000003030a0102040109080affffffff000000000402",
+    "len": 60
+   },
+   "sent_parsed": {
+    "ip_src": "192.0.2.2",
+    "ip_dst": "192.0.2.1",
+    "ip_id": 23465,
+    "ip_ttl": 64,
+    "ip_tos": 0,
+    "ip_df": true,
+    "ip_len": 60,
+    "l4": "tcp",
+    "sport": 42765,
+    "dport": 3389,
+    "seq": 823453711,
+    "ack": 16822980,
+    "window": 1024,
+    "flags": "A",
+    "flags_bits": 16,
+    "options": "WANM109T10S",
+    "options_raw": [
+     [
+      "WScale",
+      10
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "MSS",
+      265
+     ],
+     [
+      "Timestamp",
+      [
+       4294967295,
+       0
+      ]
+     ],
+     [
+      "SAckOK",
+      ""
+     ]
+    ],
+    "reserved": 0,
+    "urgptr": 0
+   },
+   "name": "T4",
+   "kind": "tcp_unusual",
+   "gap_before_sec": 0.2,
+   "sent_at_offset_sec": 14.19348,
+   "reply": null,
+   "reply_parsed": null,
+   "timeout": true
+  },
+  {
+   "sent": {
+    "hex": "4500003c5baa000040069b0ec0000202c0000201a70e00011efe18d00100b2c4a0027a69b2a1000003030a0102040109080affffffff000000000402",
+    "len": 60
+   },
+   "sent_parsed": {
+    "ip_src": "192.0.2.2",
+    "ip_dst": "192.0.2.1",
+    "ip_id": 23466,
+    "ip_ttl": 64,
+    "ip_tos": 0,
+    "ip_df": false,
+    "ip_len": 60,
+    "l4": "tcp",
+    "sport": 42766,
+    "dport": 1,
+    "seq": 519968976,
+    "ack": 16822980,
+    "window": 31337,
+    "flags": "S",
+    "flags_bits": 2,
+    "options": "WANM109T10S",
+    "options_raw": [
+     [
+      "WScale",
+      10
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "MSS",
+      265
+     ],
+     [
+      "Timestamp",
+      [
+       4294967295,
+       0
+      ]
+     ],
+     [
+      "SAckOK",
+      ""
+     ]
+    ],
+    "reserved": 0,
+    "urgptr": 0
+   },
+   "name": "T5",
+   "kind": "tcp_unusual",
+   "gap_before_sec": 0.2,
+   "sent_at_offset_sec": 16.463211,
+   "reply": null,
+   "reply_parsed": null,
+   "timeout": true
+  },
+  {
+   "sent": {
+    "hex": "4500003c5bab400040065b0dc0000202c0000201a70f0001a838ac290100b2c4a01080009067000003030a0102040109080affffffff000000000402",
+    "len": 60
+   },
+   "sent_parsed": {
+    "ip_src": "192.0.2.2",
+    "ip_dst": "192.0.2.1",
+    "ip_id": 23467,
+    "ip_ttl": 64,
+    "ip_tos": 0,
+    "ip_df": true,
+    "ip_len": 60,
+    "l4": "tcp",
+    "sport": 42767,
+    "dport": 1,
+    "seq": 2822286377,
+    "ack": 16822980,
+    "window": 32768,
+    "flags": "A",
+    "flags_bits": 16,
+    "options": "WANM109T10S",
+    "options_raw": [
+     [
+      "WScale",
+      10
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "MSS",
+      265
+     ],
+     [
+      "Timestamp",
+      [
+       4294967295,
+       0
+      ]
+     ],
+     [
+      "SAckOK",
+      ""
+     ]
+    ],
+    "reserved": 0,
+    "urgptr": 0
+   },
+   "name": "T6",
+   "kind": "tcp_unusual",
+   "gap_before_sec": 0.2,
+   "sent_at_offset_sec": 18.725388,
+   "reply": null,
+   "reply_parsed": null,
+   "timeout": true
+  },
+  {
+   "sent": {
+    "hex": "4500003c5bac000040069b0cc0000202c0000201a7100001737c23fa0100b2c4a029ffffc839000003030f0102040109080affffffff000000000402",
+    "len": 60
+   },
+   "sent_parsed": {
+    "ip_src": "192.0.2.2",
+    "ip_dst": "192.0.2.1",
+    "ip_id": 23468,
+    "ip_ttl": 64,
+    "ip_tos": 0,
+    "ip_df": false,
+    "ip_len": 60,
+    "l4": "tcp",
+    "sport": 42768,
+    "dport": 1,
+    "seq": 1937515514,
+    "ack": 16822980,
+    "window": 65535,
+    "flags": "FPU",
+    "flags_bits": 41,
+    "options": "WFNM109T10S",
+    "options_raw": [
+     [
+      "WScale",
+      15
+     ],
+     [
+      "NOP",
+      null
+     ],
+     [
+      "MSS",
+      265
+     ],
+     [
+      "Timestamp",
+      [
+       4294967295,
+       0
+      ]
+     ],
+     [
+      "SAckOK",
+      ""
+     ]
+    ],
+    "reserved": 0,
+    "urgptr": 0
+   },
+   "name": "T7",
+   "kind": "tcp_unusual",
+   "gap_before_sec": 0.2,
+   "sent_at_offset_sec": 20.989686,
+   "reply": null,
+   "reply_parsed": null,
+   "timeout": true
+  }
+ ]
+}

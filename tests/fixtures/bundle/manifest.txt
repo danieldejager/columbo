@@ -1,0 +1,13 @@
+label=fake-os-1
+firewall=off
+restart=0
+runs=6
+run_gap_s=300
+open_tcp=22
+closed_tcp=1
+closed_udp=1
+probe_version=1.0.0
+derive_version=1.0.0
+python_version=3.12.0
+scapy_version=2.5.0
+arch=x86_64

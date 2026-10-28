@@ -1,0 +1,53 @@
+{
+  "run_id": "0b5e7c1a-3f2d-4e8b-9a6c-1d2e3f405162",
+  "run_index": 0,
+  "tool": "probe",
+  "tool_version": "1.0.0",
+  "target": "192.0.2.1",
+  "ports": {
+    "open_tcp": 22,
+    "closed_tcp": 1,
+    "closed_udp": 1
+  },
+  "exchanges": [
+    {
+      "name": "SEQ1",
+      "kind": "syn_seq",
+      "gap_before_sec": 0.0,
+      "sent_at_offset_sec": 0.0,
+      "sent": {
+        "hex": "450000280001400040060000c000020ac00002010000000000000000000000000000000000000000",
+        "len": 40
+      },
+      "sent_parsed": {
+        "l4": "tcp",
+        "ip_src": "192.0.2.10",
+        "ip_dst": "192.0.2.1",
+        "ip_ttl": 64,
+        "sport": 40000,
+        "dport": 22,
+        "options_raw": [
+          [
+            "MSS",
+            1460
+          ]
+        ]
+      },
+      "reply": {
+        "hex": "450000280001400040060000c0000201c000020a0000000000000000000000000000000000000000",
+        "len": 40
+      },
+      "reply_parsed": {
+        "l4": "tcp",
+        "ip_src": "192.0.2.1",
+        "ip_dst": "192.0.2.10",
+        "ip_ttl": 64,
+        "window": 65535,
+        "flags": "SA",
+        "options": "MSTNW",
+        "colour": "blue"
+      },
+      "timeout": false
+    }
+  ]
+}

@@ -1,0 +1,573 @@
+#!/usr/bin/env python3
+"""Build OS fingerprint database entries from our own captures.
+
+Two subcommands:
+
+  block     one or more capture run dirs of the same persona (for example a
+            first capture and its -restart capture), or explicit run JSONs +
+            tool-versions.txt -> one persona block (<persona>.fp) + sidecar
+            (<persona>.provenance.json)
+  assemble  persona blocks -> the database file, in a fixed persona order,
+            keeping only the personas named in an include list (the ones that
+            passed scoring)
+
+Inputs are ONLY the probe.py run JSONs, tool-versions.txt, and the firewall
+state / capture run id parsed from the run dir name. Nothing else in a capture
+dir (nmap.xml, nmap.txt, p0f.log, the pcap, personality.txt,
+derive-report.json) is opened, and no third-party fingerprint database is
+read. Output is deterministic: no wall-clock time, stable ordering, and the
+order of input files does not matter. The script makes no network
+connections.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+import sys
+from pathlib import Path
+from typing import Any
+
+_HERE = Path(__file__).resolve().parent
+if str(_HERE) not in sys.path:
+    sys.path.insert(0, str(_HERE))
+
+from _version import __version__  # noqa: E402
+from derive import FieldObs, derive, render_personality  # noqa: E402
+
+GENERATOR = "tools/derive/build_db.py"
+# The generator has its own version, separate from the probe/derive version.
+GENERATOR_VERSION = "1.0.0"
+
+
+def _derive_provenance() -> dict[str, str]:
+    """sha256 of the derive.py in use, and the last git commit that touched
+    it (stable across unrelated commits; 'unknown' outside a git checkout).
+    derive.py 0.3.2 before and after an upstream fix share a version string, so the
+    file hash is what tells them apart."""
+    import subprocess
+    path = _HERE / "derive.py"
+    sha = hashlib.sha256(path.read_bytes()).hexdigest()
+    try:
+        commit = subprocess.run(["git", "log", "-1", "--format=%H", "--", "derive.py"], cwd=_HERE,
+                                capture_output=True, text=True, timeout=10).stdout.strip() or "unknown"
+    except (OSError, subprocess.SubprocessError):
+        commit = "unknown"
+    return {"version": __version__, "commit": commit, "sha256": sha}
+
+
+DERIVE = _derive_provenance()
+MIN_RUNS = 3
+
+# Capture target key -> (os family, description used in provenance only).
+TARGETS: dict[str, tuple[str, str]] = {
+    "ubuntu2404": ("linux", "Ubuntu 24.04"),
+    "ws2022": ("windows", "Windows Server 2022"),
+    "ws2019": ("windows", "Windows Server 2019"),
+    "ws2025": ("windows", "Windows Server 2025"),
+    "win11": ("windows", "Windows 11"),
+}
+
+# Fixed persona order of the database file.
+PERSONA_ORDER: list[str] = [
+    "ubuntu2404",
+    "ws2022-fwon", "ws2022-fwoff",
+    "ws2019-fwon", "ws2019-fwoff",
+    "ws2025-fwon", "ws2025-fwoff",
+    "win11-fwon", "win11-fwoff",
+]
+
+# Fields where runs may disagree. Every other field must be identical in all
+# runs or the build is refused. SP and ISR are coarse timing estimates that
+# derive.py computes from ISN deltas and inter-probe gaps; the scoring sheet
+# (F5) scores them against the control's own three-run range, and
+# personality.c accepts a "min-max" hex range for both. So they are emitted
+# as the observed min-max range across runs.
+RANGE_FIELDS = ("SEQ.SP", "SEQ.ISR")
+
+# tool-versions.txt keys that are NOT copied into provenance: the revision
+# line of the third-party nmap OS database (we never carry its content).
+# Also dropped: capture host names and addresses (vm, ip, probe_host). They are
+# capture network details, not facts about the target OS, and must not end up in
+# a committed sidecar.
+# Capture host data and oracle tool versions never reach the shipped file or
+# sidecars: addresses, VM and probe host names, the probe host kernel (its
+# cloud flavour), and the nmap/p0f versions (oracles only, not inputs).
+TOOL_VERSIONS_DROP = {"nmap_os_db", "ip", "vm", "probe_host", "kernel",
+                      "nmap_version", "nmap_pkg", "p0f_version"}
+# A kernel flavour tag in a build string names the hosting, not the OS.
+_HOSTING_FLAVOUR_RE = re.compile(r"-(azure|aws|gcp|gke|oracle|kvm)\b", re.I)
+
+# run-<capture run id>-<attempt>-fw<on|off>[-restart][-p<open tcp port>]
+RUN_DIR_RE = re.compile(
+    r"^run-(?P<run_id>[0-9]+)-(?P<attempt>[0-9]+)-fw(?P<fw>on|off)"
+    r"(?P<restart>-restart)?(?:-p(?P<port>[0-9]+))?$"
+)
+
+# How SEQ.SP and SEQ.ISR are produced; stated in every sidecar and header.
+SP_ISR_METHOD = (
+    "per probe run: derive.py " + __version__ + " _seq_metrics (ISR = round(8*log2(mean ISN rate)), "
+    "SP = round(8*log2(sample (n-1) stddev of per-probe ISN rates, divided by GCD when GCD>9))); "
+    "across all probe runs of all captures: min-max hex range"
+)
+
+# tool-versions.txt keys that must be identical across the captures merged
+# into one persona (same target, same build, same probe and ports).
+CAPTURE_SAME_KEYS = ("target", "firewall", "open_tcp", "closed_tcp", "closed_udp",
+                     "target_os_build", "target_os_patch", "target_os_edition")
+
+DB_HEADER = [
+    "# OS fingerprint database (our own measured entries only).",
+    "# Generated by " + GENERATOR + "; do not edit by hand.",
+    "# Load with: <loader> -p <path to this file> ...",
+    "# A loader reads exactly ONE personality file: personas that exist only in",
+    "# the bundled third-party nmap-os-db are NOT available when this file is loaded.",
+    "# Provenance: '#@' lines before each block, sidecar <persona>.provenance.json.",
+]
+
+
+class BuildError(Exception):
+    """Input refused; the CLI exits non-zero with this message."""
+
+
+# ---------------------------------------------------------------------------
+# Inputs
+# ---------------------------------------------------------------------------
+
+def parse_run_dir_name(name: str) -> dict[str, str]:
+    m = RUN_DIR_RE.match(name)
+    if not m:
+        raise BuildError(
+            f"run dir name {name!r} is not run-<run_id>-<attempt>-fw<on|off>; "
+            "firewall state and capture run id cannot be determined"
+        )
+    return {"lab_run_id": m["run_id"], "attempt": m["attempt"], "firewall": m["fw"],
+            "restart": bool(m["restart"]), "port": m["port"]}
+
+
+def parse_tool_versions(text: str) -> dict[str, str]:
+    """Parse tool-versions.txt (key=value per line; the target= line holds
+    several space-separated key=value pairs, and so does the target_os_build=
+    line)."""
+    out: dict[str, str] = {}
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        if line.startswith(("target=", "target_os_build=")):
+            for tok in line.split():
+                if "=" in tok:
+                    k, v = tok.split("=", 1)
+                    out[k] = v
+            continue
+        k, v = line.split("=", 1)
+        out[k.strip()] = v.strip()
+    return out
+
+
+def _sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def load_inputs(
+    runs: list[Path], tool_versions: Path | None, run_name: str
+) -> dict[str, Any]:
+    if tool_versions is None or not tool_versions.is_file():
+        raise BuildError(f"missing tool-versions.txt ({tool_versions})")
+    if len(runs) < MIN_RUNS:
+        raise BuildError(f"{run_name}: need at least {MIN_RUNS} run JSONs, got {len(runs)}")
+    tv_bytes = tool_versions.read_bytes()
+    tv = parse_tool_versions(tv_bytes.decode("utf-8"))
+    docs = []
+    for p in runs:
+        raw = p.read_bytes()
+        try:
+            doc = json.loads(raw.decode("utf-8"))
+        except ValueError as e:
+            raise BuildError(f"{p.name}: not JSON ({e})") from None
+        if not isinstance(doc, dict) or "exchanges" not in doc or "run_id" not in doc:
+            raise BuildError(f"{p.name}: not a probe run JSON")
+        docs.append((doc, _sha256(raw), p.name))
+    # Input order must not matter.
+    docs.sort(key=lambda d: (str(d[0]["run_id"]), d[1]))
+    return {"tv": tv, "tv_sha256": _sha256(tv_bytes), "runs": docs, "run_name": run_name}
+
+
+MIN_PROBE_VERSION = "0.3.2"
+
+
+def _vtuple(v: str) -> tuple[int, ...]:
+    try:
+        return tuple(int(x) for x in v.split("."))
+    except ValueError:
+        return (0,)
+
+
+def validate(inp: dict[str, Any]) -> dict[str, Any]:
+    tv = inp["tv"]
+    meta = parse_run_dir_name(inp["run_name"])
+    docs = [d[0] for d in inp["runs"]]
+
+    ids = [str(d["run_id"]) for d in docs]
+    if len(set(ids)) != len(ids):
+        raise BuildError(f"duplicate run_id among run JSONs: {ids}")
+
+    for d in docs:
+        if d.get("dry_run") or any(ex.get("dry_run") for ex in d.get("exchanges", [])):
+            raise BuildError(f"run {d['run_id']} is a dry run (no packets were sent)")
+
+    for key in ("target", "ports", "tool_version"):
+        vals = {json.dumps(d.get(key), sort_keys=True) for d in docs}
+        if len(vals) != 1 or any(d.get(key) in (None, "", {}) for d in docs):
+            raise BuildError(f"run JSONs disagree on or lack {key!r}: {sorted(vals)}")
+
+    # Probe shapes changed in 0.3.0 (option order, ack, DF, ECN/IE/U1 fields)
+    # and again in 0.3.1 (per-probe random TCP sequence numbers
+    # per the published method). Older captures measured different probes,
+    # so they must not be turned into shipped entries. 0.3.2 did not change
+    # the probes, but 0.3.1 dropped RST replies to T2/T7 (reply matcher), so
+    # 0.3.1 runs can be missing closed-port results and are refused too.
+    pv = str(docs[0].get("tool_version"))
+    if _vtuple(pv) < _vtuple(MIN_PROBE_VERSION):
+        raise BuildError(
+            f"run JSONs were captured with probe.py {pv}; {MIN_PROBE_VERSION} or later is "
+            "required (earlier probes did not match the published probe set, and 0.3.1 "
+            "dropped RST replies to T2/T7; re-capture)"
+        )
+
+    target_key = tv.get("target", "")
+    if target_key not in TARGETS:
+        raise BuildError(f"tool-versions.txt target {target_key!r} is not a known target key")
+    family, desc = TARGETS[target_key]
+
+    fw_tv = tv.get("firewall")
+    if fw_tv not in ("on", "off"):
+        raise BuildError(f"tool-versions.txt has no firewall=on|off (got {fw_tv!r})")
+    if fw_tv != meta["firewall"]:
+        raise BuildError(
+            f"firewall state mismatch: run dir says fw{meta['firewall']}, "
+            f"tool-versions.txt says firewall={fw_tv}"
+        )
+    if family == "linux" and meta["firewall"] == "off":
+        raise BuildError(f"firewall=off is not valid for Linux target {target_key}")
+
+    # Cross-check the probe runs against the capture's own record.
+    first = docs[0]
+    if tv.get("ip") and tv["ip"] != first["target"]:
+        raise BuildError(f"run JSON target {first['target']} != tool-versions ip {tv['ip']}")
+    ports = first.get("ports") or {}
+    for tv_key, run_key in (("open_tcp", "open_tcp"), ("closed_tcp", "closed_tcp"), ("closed_udp", "closed_udp")):
+        if tv.get(tv_key) is not None and str(ports.get(run_key)) != tv[tv_key]:
+            raise BuildError(
+                f"ports mismatch: run JSON {run_key}={ports.get(run_key)} vs tool-versions {tv_key}={tv[tv_key]}"
+            )
+
+    if meta["port"] is not None and str(ports.get("open_tcp")) != meta["port"]:
+        raise BuildError(
+            f"run dir {inp['run_name']} says -p{meta['port']} but the runs probed "
+            f"open_tcp={ports.get('open_tcp')}"
+        )
+    if tv.get("restart") is not None and tv["restart"] != ("1" if meta["restart"] else "0"):
+        raise BuildError(
+            f"restart mismatch: run dir {inp['run_name']} vs tool-versions restart={tv['restart']}"
+        )
+
+    persona = target_key if family == "linux" else f"{target_key}-fw{meta['firewall']}"
+    return {**meta, "target_key": target_key, "family": family, "description": desc,
+            "persona": persona, "run_ids": ids, "open_tcp": ports.get("open_tcp"),
+            "ports": ports}
+
+
+# ---------------------------------------------------------------------------
+# Build
+# ---------------------------------------------------------------------------
+
+def _resolve_fields(obs: dict[str, FieldObs]) -> dict[str, str]:
+    """Apply the disagreement rules in place. Returns {field: rule note}."""
+    bad = []
+    applied: dict[str, str] = {}
+    for key in sorted(obs):
+        fo = obs[key]
+        if fo.unanimous():
+            continue
+        if key in RANGE_FIELDS and all(isinstance(v, int) for v in fo.values):
+            lo, hi = min(fo.values), max(fo.values)
+            fo.values = [f"{lo:X}-{hi:X}"] * len(fo.values)
+            applied[key] = f"range {lo:X}-{hi:X} (min-max of runs)"
+        else:
+            bad.append(f"{key}={fo.values}")
+    if bad:
+        raise BuildError("runs disagree on fields with no range rule: " + "; ".join(bad))
+    return applied
+
+
+ECN_FIELDS = ("R", "DF", "T", "TG", "W", "O", "CC", "Q")
+
+
+def _check_ecn_line(body: str) -> None:
+    """Verified pass-through: derive.py renders ECN; refuse if it ever emits a
+    field personality.c's parse_ecn would reject."""
+    m = re.search(r"^ECN\((.*)\)$", body, flags=re.M)
+    if not m:
+        raise BuildError("internal: no ECN line in render output")
+    names = {f.split("=", 1)[0] for f in m[1].split("%")}
+    bad = sorted(names - set(ECN_FIELDS))
+    if bad:
+        raise BuildError(f"internal: ECN line has fields parse_ecn rejects: {bad}")
+
+
+def _public_tv(tv: dict[str, str]) -> dict[str, str]:
+    return {k: v for k, v in sorted(tv.items())
+            if k not in TOOL_VERSIONS_DROP and not _HOSTING_FLAVOUR_RE.search(v)}
+
+
+def _public_build(tv: dict[str, str]) -> tuple[str | None, str | None]:
+    """OS build and patch, or (None, None) when they carry a hosting flavour."""
+    b, pt = tv.get("target_os_build"), tv.get("target_os_patch")
+    if any(x and _HOSTING_FLAVOUR_RE.search(x) for x in (b, pt)):
+        return None, None
+    return b, pt
+
+
+def build_block(inps: list[dict[str, Any]] | dict[str, Any],
+                extra_limits: list[str] | None = None) -> tuple[str, str, str]:
+    """Return (persona, block_text, sidecar_json_text).
+
+    *inps* is one load_inputs() result per capture run dir. Several captures
+    (a first capture and a -restart capture) are merged into one persona:
+    they must agree on persona, target build, ports and probe version, and
+    every probe run of every capture goes through the same disagreement
+    rules."""
+    if isinstance(inps, dict):
+        inps = [inps]
+    if not inps:
+        raise BuildError("no capture given")
+    metas = [validate(i) for i in inps]
+    caps = sorted(zip(metas, inps), key=lambda c: (int(c[0]["lab_run_id"]), int(c[0]["attempt"])))
+    metas = [c[0] for c in caps]
+    inps = [c[1] for c in caps]
+    names = [i["run_name"] for i in inps]
+    if len(set(names)) != len(names):
+        raise BuildError(f"the same capture was given twice: {names}")
+    for key, vals in (("persona", [m["persona"] for m in metas]),
+                      ("ports", [json.dumps(m["ports"], sort_keys=True) for m in metas])):
+        if len(set(vals)) != 1:
+            raise BuildError(f"captures disagree on {key}: {dict(zip(names, vals))}")
+    for key in CAPTURE_SAME_KEYS:
+        vals = [i["tv"].get(key) for i in inps]
+        if len(set(vals)) != 1:
+            raise BuildError(f"captures disagree on tool-versions {key}: {dict(zip(names, vals))}")
+    pvs = {str(d[0]["tool_version"]) for i in inps for d in i["runs"]}
+    if len(pvs) != 1:
+        raise BuildError(f"captures were made with different probe.py versions: {sorted(pvs)}")
+    all_runs = [d for i in inps for d in i["runs"]]
+    ids = [str(d[0]["run_id"]) for d in all_runs]
+    if len(set(ids)) != len(ids):
+        raise BuildError(f"duplicate run_id across captures: {ids}")
+
+    meta = metas[0]
+    docs = [d[0] for d in all_runs]
+    persona = meta["persona"]
+    result = derive(docs, os_name=persona, os_build=meta["description"])
+    # Snapshot the raw per-run report before rules rewrite range fields.
+    # Probe run ids are replaced by capture/run labels (c1r1, c1r2, ...),
+    # in the same order as captures[].inputs.runs in the sidecar.
+    label = {str(d[0]["run_id"]): f"c{ci}r{ri}"
+             for ci, i in enumerate(inps, start=1) for ri, d in enumerate(i["runs"], start=1)}
+    report_fields = json.loads(json.dumps(
+        {k: {"values": v.values, "sources": [label.get(str(x), str(x)) for x in v.sources],
+             "stable": v.unanimous()}
+         for k, v in sorted(result["obs"].items())}, default=str))
+    rules = _resolve_fields(result["obs"])
+
+    body = render_personality(result)
+    body = body[body.index("\nFingerprint ") + 1:]
+    _check_ecn_line(body)
+    if not body.startswith(f"Fingerprint {persona}\n"):
+        raise BuildError("internal: unexpected render output")
+
+    tv0 = inps[0]["tv"]
+    ports = meta["ports"]
+    limits: list[str] = []
+    if len(inps) == 1:
+        limits.append(
+            f"single capture: every field rests on one capture ({len(docs)} probe runs, "
+            f"one boot); no restart capture to confirm it"
+        )
+
+    for x in extra_limits or []:
+        if "\n" in x or not x.strip():
+            raise BuildError("a limit note must be one non-empty line")
+        limits.append(x.strip())
+
+    def _uniq(key):
+        return ",".join(dict.fromkeys(i["tv"].get(key, "unknown") for i in inps))
+
+    os_build, os_patch = _public_build(tv0)
+    hdr = [
+        f"#@ persona: {persona}",
+        f"#@ target: {meta['target_key']} ({meta['description']})",
+    ] + ([f"#@ os-build: {os_build} {os_patch or ''}".rstrip()] if os_build else []) + [
+        f"#@ firewall: {meta['firewall']}",
+        f"#@ ports: open_tcp={ports.get('open_tcp')} closed_tcp={ports.get('closed_tcp')} "
+        f"closed_udp={ports.get('closed_udp')}",
+        f"#@ captures: {len(inps)}"
+        + (" (second after a restart)" if len(inps) == 2 and metas[1]["restart"] else ""),
+        f"#@ probe-runs: {len(ids)}",
+        f"#@ probe-tool: probe {docs[0]['tool_version']}",
+        f"#@ captured-utc: {_uniq('captured_utc')}",
+        f"#@ tool-source-commit: {_uniq('tool_source_commit')}",
+        f"#@ tool-versions-sha256: {','.join(i['tv_sha256'] for i in inps)}",
+        f"#@ generator: {GENERATOR} {GENERATOR_VERSION}",
+        f"#@ derive: tools/derive/derive.py {DERIVE['version']} commit {DERIVE['commit']} "
+        f"sha256 {DERIVE['sha256']}",
+        "#@ sp-isr-method: min-max range over all probe runs (see sidecar)",
+        f"#@ ranges: {', '.join(f'{k} {v}' for k, v in rules.items()) or 'none'}",
+    ] + [f"#@ limit: {x}" for x in limits]
+    block = "\n".join(hdr) + "\n" + body
+    sidecar = {
+        "persona": persona,
+        "generator": {"name": GENERATOR, "version": GENERATOR_VERSION},
+        "target": {"key": meta["target_key"], "family": meta["family"],
+                   "description": meta["description"], "firewall": meta["firewall"],
+                   "os_build": os_build, "os_patch": os_patch,
+                   "os_edition": tv0.get("target_os_edition")},
+        "ports": ports,
+        "captures": [
+            {"capture": f"c{ci}", "restart": m["restart"],
+             "inputs": {
+                 "runs": [{"run": f"c{ci}r{ri}", "sha256": sha}
+                          for ri, (d, sha, name) in enumerate(i["runs"], start=1)],
+                 "tool_versions_sha256": i["tv_sha256"]},
+             "tool_versions": _public_tv(i["tv"])}
+            for ci, (m, i) in enumerate(zip(metas, inps), start=1)
+        ],
+        "limits": limits,
+        "sp_isr_method": SP_ISR_METHOD,
+        "derive": dict(DERIVE),
+        "rules_applied": rules,
+        "derive_report": {"fields": report_fields},
+        "block_sha256": _sha256(block.encode("utf-8")),
+    }
+    return persona, block, json.dumps(sidecar, indent=2, sort_keys=True) + "\n"
+
+
+# ---------------------------------------------------------------------------
+# Assemble
+# ---------------------------------------------------------------------------
+
+def block_persona(text: str) -> str:
+    hdr = re.search(r"^#@ persona: (\S+)$", text, re.M)
+    fp = re.search(r"^Fingerprint (.+)$", text, re.M)
+    if not hdr or not fp or hdr.group(1) != fp.group(1).strip():
+        raise BuildError("block has no matching '#@ persona:' header and Fingerprint line")
+    return hdr.group(1)
+
+
+def read_name_list(path: Path) -> list[str]:
+    names = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.split("#", 1)[0].strip()
+        if line:
+            names.append(line)
+    return names
+
+
+def assemble(blocks: list[str], include: list[str]) -> tuple[str, list[str]]:
+    """Return (db_text, skipped personas)."""
+    unknown = [n for n in include if n not in PERSONA_ORDER]
+    if unknown:
+        raise BuildError(f"include list names unknown personas: {unknown}")
+    if len(set(include)) != len(include):
+        raise BuildError("include list has duplicates")
+    by_name: dict[str, str] = {}
+    for text in blocks:
+        name = block_persona(text)
+        if name not in PERSONA_ORDER:
+            raise BuildError(f"block for unknown persona {name!r}")
+        if name in by_name:
+            raise BuildError(f"two blocks for persona {name!r}")
+        by_name[name] = text.rstrip("\n") + "\n"
+    missing = [n for n in include if n not in by_name]
+    if missing:
+        raise BuildError(f"include list names personas with no block: {missing}")
+    skipped = sorted((n for n in by_name if n not in include), key=PERSONA_ORDER.index)
+    chosen = [n for n in PERSONA_ORDER if n in include]
+    out = list(DB_HEADER) + [f"#@ db-personas: {','.join(chosen) or 'none'}", ""]
+    text = "\n".join(out) + "\n" + "\n".join(by_name[n] for n in chosen)
+    return text, skipped
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+def build_arg_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(prog="build_db.py", description=__doc__,
+                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--version", action="version", version=f"%(prog)s {GENERATOR_VERSION} (derive {__version__})")
+    sub = p.add_subparsers(dest="cmd", required=True)
+    b = sub.add_parser("block", help="build one persona block + sidecar")
+    b.add_argument("run_dir", nargs="*", type=Path,
+                   help="capture run dir(s) run-<run_id>-<attempt>-fw<on|off>[-restart][-p<port>], "
+                        "all of the same persona")
+    b.add_argument("--runs", nargs="+", type=Path, help="explicit run JSONs (instead of run_dir)")
+    b.add_argument("--tool-versions", type=Path, help="explicit tool-versions.txt")
+    b.add_argument("--run-name", help="run dir name, required with --runs")
+    b.add_argument("-o", "--out-dir", type=Path, required=True)
+    a = sub.add_parser("assemble", help="assemble blocks into the database")
+    a.add_argument("blocks", nargs="*", type=Path)
+    a.add_argument("--include", type=Path, required=True,
+                   help="file listing the personas that passed scoring, one per line")
+    a.add_argument("-o", "--output", type=Path, required=True)
+    return p
+
+
+def _cmd_block(args: argparse.Namespace) -> int:
+    if args.runs:
+        if args.run_dir or not args.run_name:
+            raise BuildError("--runs needs --run-name and --tool-versions, and no run_dir")
+        inps = [load_inputs(list(args.runs), args.tool_versions, args.run_name)]
+    elif args.run_dir:
+        if args.tool_versions or args.run_name:
+            raise BuildError("--tool-versions/--run-name only go with --runs")
+        inps = []
+        for d in args.run_dir:
+            if not d.is_dir():
+                raise BuildError(f"not a directory: {d}")
+            # Only these names are opened; every other artifact is ignored.
+            inps.append(load_inputs(sorted(d.glob("run-*.json")), d / "tool-versions.txt",
+                                    d.resolve().name))
+    else:
+        raise BuildError("give a run dir or --runs")
+    persona, block, sidecar = build_block(inps)
+    args.out_dir.mkdir(parents=True, exist_ok=True)
+    (args.out_dir / f"{persona}.fp").write_text(block, encoding="utf-8")
+    (args.out_dir / f"{persona}.provenance.json").write_text(sidecar, encoding="utf-8")
+    print(f"wrote {persona}.fp and {persona}.provenance.json", file=sys.stderr)
+    return 0
+
+
+def _cmd_assemble(args: argparse.Namespace) -> int:
+    blocks = [p.read_text(encoding="utf-8") for p in args.blocks]
+    text, skipped = assemble(blocks, read_name_list(args.include))
+    args.output.write_text(text, encoding="utf-8")
+    for n in skipped:
+        print(f"excluded (not in include list): {n}", file=sys.stderr)
+    print(f"wrote {args.output}", file=sys.stderr)
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_arg_parser().parse_args(argv)
+    try:
+        return _cmd_block(args) if args.cmd == "block" else _cmd_assemble(args)
+    except BuildError as e:
+        print(f"build_db.py: refused: {e}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

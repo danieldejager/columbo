@@ -1,0 +1,1 @@
+{"name": "win11-fwon", "firewall": "on", "runs": 6, "probe_version": "0.3.2", "derive_version": "0.3.2"}

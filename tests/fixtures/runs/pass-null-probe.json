@@ -1,0 +1,68 @@
+{
+ "run_id": "5d1c2e3f-4a5b-4c6d-8e7f-0a1b2c3d4e5f",
+ "run_index": 1,
+ "tool": "probe",
+ "tool_version": "1.0.0",
+ "target": "192.0.2.1",
+ "ports": {
+  "open_tcp": 22,
+  "closed_tcp": 1,
+  "closed_udp": 1
+ },
+ "exchanges": [
+  {
+   "name": "T2",
+   "kind": "tcp_unusual",
+   "gap_before_sec": 0.1,
+   "sent_at_offset_sec": 0.3,
+   "sent": {
+    "hex": "4500002c012c40004006b594c000020ac00002019c420016000007d000000000600000806f740000020405b4",
+    "len": 44
+   },
+   "sent_parsed": {
+    "l4": "tcp",
+    "ip_src": "192.0.2.10",
+    "ip_dst": "192.0.2.1",
+    "ip_id": 300,
+    "ip_ttl": 64,
+    "ip_df": true,
+    "ip_len": 44,
+    "sport": 40002,
+    "dport": 22,
+    "seq": 2000,
+    "ack": 0,
+    "window": 128,
+    "flags": "",
+    "flags_bits": 0,
+    "options_raw": [
+     [
+      "MSS",
+      1460
+     ]
+    ]
+   },
+   "reply": {
+    "hex": "45000028000040004006b6c4c0000201c000020a00169c4200000000000007d050140000879c0000",
+    "len": 40
+   },
+   "reply_parsed": {
+    "l4": "tcp",
+    "ip_src": "192.0.2.1",
+    "ip_dst": "192.0.2.10",
+    "ip_id": 0,
+    "ip_ttl": 64,
+    "ip_df": true,
+    "ip_len": 40,
+    "sport": 22,
+    "dport": 40002,
+    "seq": 0,
+    "ack": 2000,
+    "window": 0,
+    "flags": "RA",
+    "flags_bits": 20,
+    "options": ""
+   },
+   "timeout": false
+  }
+ ]
+}
