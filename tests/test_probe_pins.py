@@ -121,3 +121,51 @@ def test_parsed_tos_mismatch_fails_rebuild():
     r["exchanges"] = [{"name": "IE2", "kind": "icmp", "timeout": True,
                        "sent": {"hex": pkt.hex(), "len": len(pkt)}, "sent_parsed": parsed}]
     assert any("rebuild" in e for e in B.check_run(r))
+
+
+# Reply pin: the reply to the ECN probe may carry IP TOS 2, exact value only.
+
+def test_reply_pin_table_is_one_exact_value():
+    assert B.REPLY_FIELD_PINS == {("ECN", "ecn"): {"l4": "tcp", "ip_tos": 2}}
+
+
+def test_ecn_reply_tos_two_passes_and_rebuilds():
+    assert run_with("ECN", "ecn", tcp_pkt(flags="SA", urgptr=0, reserved=0, tos=2), where="reply") == []
+
+
+def test_ecn_reply_tos_zero_still_passes():
+    assert run_with("ECN", "ecn", tcp_pkt(flags="SA", urgptr=0, reserved=0, tos=0), where="reply") == []
+
+
+def test_ecn_reply_other_tos_fails():
+    for tos in (1, 3, 4):
+        errs = run_with("ECN", "ecn", tcp_pkt(flags="SA", urgptr=0, reserved=0, tos=tos), where="reply")
+        assert any("TOS" in e for e in errs), tos
+
+
+def test_tos_two_on_other_replies_fails():
+    for name, kind in (("T1", "tcp"), ("T2", "tcp"), ("SEQ1", "seq"), ("ECN", "tcp")):
+        errs = run_with(name, kind, tcp_pkt(flags="SA", urgptr=0, reserved=0, tos=2), where="reply")
+        assert any("TOS" in e for e in errs), (name, kind)
+    errs = run_with("IE2", "icmp", icmp_pkt(tos=2), where="reply")
+    assert any("TOS" in e for e in errs)
+
+
+def test_tos_two_on_sent_packets_fails():
+    assert any("TOS" in e for e in run_with("ECN", "ecn", tcp_pkt(tos=2)))
+    assert any("TOS" in e for e in run_with("T1", "tcp", tcp_pkt(flags="S", urgptr=0, reserved=0, tos=2)))
+    assert any("TOS" in e for e in run_with("IE2", "icmp", icmp_pkt(tos=2)))
+
+
+def test_ecn_reply_parsed_tos_must_equal_bytes():
+    pkt = tcp_pkt(flags="SA", urgptr=0, reserved=0, tos=2)
+    r = json.loads((FIX / "pass-run.json").read_text())
+    parsed = {k: v for k, v in B.decode_ipv4(pkt).items() if k in B.PARSED_KEYS}
+    parsed["reserved"] = 0
+    parsed["options_raw"] = []
+    parsed["ip_tos"] = 0
+    sent = r["exchanges"][0]
+    r["exchanges"] = [{"name": "ECN", "kind": "ecn", "timeout": False, "sent": sent["sent"],
+                       "sent_parsed": sent["sent_parsed"], "reply": {"hex": pkt.hex(), "len": len(pkt)},
+                       "reply_parsed": parsed}]
+    assert B.check_run(r) != []

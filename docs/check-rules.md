@@ -35,13 +35,23 @@ Data paths allowed (mode 100644 only), anything else under `entries/` or `bundle
 - Name: one of the release personas (`PERSONA_ORDER` in `tools/derive/build_db.py`).
 - Internal consistency: file name, `#@ name` and `Fingerprint` line agree; firewall
   agrees with the name ending; sidecar present and equal to the `#@` lines.
-- Provenance: runs 6 to 40, probe and derive versions `N.N.N`, firewall `on` or `off`.
+- Provenance: runs 6 to 40 (3 to 40 for an entry without a bundle, below), probe and derive versions `N.N.N`, firewall `on` or `off`.
 - Duplicate name (case-insensitive) against all other entries.
 - Duplicate fingerprint: every field identical to another entry.
 - Sibling separation: a new or changed entry must differ from every other entry in
   at least 2 fields of the full field set. Fields are compared as `GROUP.FIELD`
   pairs over the union of both entries' fields; a field present in one entry and
   absent in the other counts as a difference. The threshold of 2 is provisional.
+
+## Entries without a bundle
+One entry was measured by the project before capture bundles were published:
+`ubuntu2404` (3 runs from one boot, no capture bundle published). It is listed
+in `NO_BUNDLE_ENTRIES` in `tools/checks/entry.py` by exact name. While no
+linked bundle is in the pull request it skips the bundle to entry link check,
+and its run minimum is 3 instead of 6. Every other check still applies:
+format, `#@` lines, sidecar equality, block parse, private string scan and
+sibling separation. The list is closed; no other name, prefix or pattern is
+exempt, and a new entry always needs its bundle.
 
 ## Bundle to entry link
 Every new or changed entry `<name>` must come in the same pull request as its
@@ -169,8 +179,9 @@ The probe set follows a published scanner method. Two of its probes carry
 fixed non zero header fields, the same in every run: IE2's TOS comes from the
 method's description, and ECN's urgent pointer and reserved bits are matched
 to observed traffic from that method. They are facts about a probe, not
-database text. These are the only non zero TOS, urgent pointer
-and reserved bit values accepted anywhere. Code: `PROBE_FIELD_PINS` and
+database text. One reply carries a pinned value too: the reply to the ECN
+probe may have IP TOS 2, as measured on servers that echo ECN. These are the
+only non zero TOS, urgent pointer and reserved bit values accepted anywhere. Code: `PROBE_FIELD_PINS` and
 `probe_pin` in `tools/checks/bundle.py` (the only place the values live).
 Tests: `tests/test_probe_pins.py`.
 
@@ -178,7 +189,8 @@ Tests: `tests/test_probe_pins.py`.
 |---|---|---|---|---|---|---|---|
 | ECN | ecn | sent | tcp | SEC | 0 | 63477 | 4 |
 | IE2 | icmp | sent | icmp | (none) | 4 | (not TCP) | (not TCP) |
-| any other, or any reply | any | any | any | any | 0 | 0 | 0 |
+| ECN | ecn | reply | tcp | (any) | 0 or exactly 2 | 0 | 0 |
+| any other, or any other reply | any | any | any | any | 0 | 0 | 0 |
 
 - A pin applies only when name, kind, sent packet, l4 and flags all match.
   The values are exact; there are no ranges.
@@ -186,6 +198,9 @@ Tests: `tests/test_probe_pins.py`.
   pointer 63476, reserved bits other than 4 or a non zero TOS fails, and IE2
   with TOS 0 or 5 fails.
 - The same values on any other probe, kind, flags or on a reply fail as before.
+- The ECN reply pin is `REPLY_FIELD_PINS` in `tools/checks/bundle.py`. A reply
+  TOS of 1, 3 or any value other than 0 or 2 fails, and TOS 2 on any other
+  reply or on a sent packet fails.
 - The rebuild takes TOS and reserved bits from the parsed fields only when they
   equal the pin, so the packet bytes still have to equal the rebuild; no check
   is skipped.
