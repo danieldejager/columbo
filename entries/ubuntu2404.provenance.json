@@ -1,0 +1,7 @@
+{
+  "name": "ubuntu2404",
+  "firewall": "on",
+  "runs": 3,
+  "probe_version": "0.3.2",
+  "derive_version": "0.3.2"
+}
