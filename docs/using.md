@@ -42,19 +42,19 @@ set windows11 personality "win11-fwoff"
 set windows11 default tcp action reset
 add windows11 tcp port 445 open
 add windows11 tcp port 3389 open
-bind 192.168.1.50 windows11
+bind 192.0.2.50 windows11
 
 create server2022
 set server2022 personality "ws2022-fwoff"
 set server2022 default tcp action reset
 add server2022 tcp port 3389 open
-bind 192.168.1.51 server2022
+bind 192.0.2.51 server2022
 ```
 
 Start it by giving the loader the database file with `-p`:
 
 ```
-honeyd -d -p columbo-v1.db -f honeyd.conf 192.168.1.50 192.168.1.51
+honeyd -d -p columbo-v1.db -f honeyd.conf 192.0.2.50 192.0.2.51
 ```
 
 This command has not been tested against every honeyd build. The loader reads exactly one personality file. Systems that exist only in another database are not available while this file is loaded.
