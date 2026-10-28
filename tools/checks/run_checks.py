@@ -144,7 +144,9 @@ def run_report(repo, base, head):
             continue
         errs = E.check_entry(b, fp_text, side)
         errors += ["%s: %s" % (b, x) for x in errs]
-        if not errs:
+        no_bundle = (b in E.NO_BUNDLE_ENTRIES
+                     and not any(lb in labels for lb in L.linked_labels(b)))
+        if not errs and not no_bundle:
             prov, _, _ = E.parse_fp(fp_text)
             errors += ["%s: %s" % (b, x)
                        for x in L.check_link(b, prov, E.block_of(fp_text), pr_bundles)]

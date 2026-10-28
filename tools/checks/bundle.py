@@ -220,20 +220,33 @@ URG_POINTER_ALLOWED = (0,)  # allow-list even when URG is set
 # urgent pointer and reserved bits are matched to observed traffic from it
 # (docs/check-rules.md, "Probe field pins"). A pin applies only
 # to the sent packet of an exchange with that exact name and kind whose parsed
-# l4 and flags equal the pin; every value is exact, never a range. Any other
-# packet keeps TOS 0, urgent pointer 0 and reserved bits 0.
+# l4 and flags equal the pin; every value is exact, never a range. The one
+# reply pin is REPLY_FIELD_PINS below. Any other packet keeps TOS 0, urgent
+# pointer 0 and reserved bits 0.
 PROBE_FIELD_PINS = {
     ("ECN", "ecn"): {"l4": "tcp", "flags": "SEC", "ip_tos": 0, "urgptr": 63477, "reserved": 4},
     ("IE2", "icmp"): {"l4": "icmp", "ip_tos": 4},
 }
 _PIN_SELECTORS = ("l4", "flags")
+# Reply pin: the reply to the ECN probe may carry IP TOS 2 (ECT(0)), as
+# measured on servers that echo ECN. Exact value only; a reply TOS of 0 needs
+# no pin, and any other value on this or any other reply fails.
+REPLY_FIELD_PINS = {
+    ("ECN", "ecn"): {"l4": "tcp", "ip_tos": 2},
+}
 
 
 def probe_pin(exchange, direction, parsed):
     """The pin for this packet, or an empty dict when none applies."""
-    if direction != "sent" or not isinstance(exchange, dict) or not isinstance(parsed, dict):
+    if direction not in ("sent", "reply") or not isinstance(exchange, dict) or not isinstance(parsed, dict):
         return {}
-    pin = PROBE_FIELD_PINS.get((exchange.get("name"), exchange.get("kind")))
+    key = (exchange.get("name"), exchange.get("kind"))
+    if direction == "reply":
+        pin = REPLY_FIELD_PINS.get(key)
+        if not pin or parsed.get("l4") != pin["l4"] or parsed.get("ip_tos") != pin["ip_tos"]:
+            return {}
+        return pin
+    pin = PROBE_FIELD_PINS.get(key)
     if not pin or any(parsed.get(k) != pin[k] for k in _PIN_SELECTORS if k in pin):
         return {}
     return pin

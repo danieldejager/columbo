@@ -22,6 +22,13 @@ VERSION_RE = re.compile(r"^\d{1,4}\.\d{1,4}\.\d{1,4}$")
 PROV_KEYS = ("name", "firewall", "runs", "probe_version", "derive_version")
 MIN_RUNS = 6
 MAX_RUNS = 40
+# Closed list, exact names only: entries measured by the project before
+# capture bundles were published. They skip the bundle link check while no
+# linked bundle is in the pull request (tools/checks/run_checks.py) and may
+# hold NO_BUNDLE_MIN_RUNS to MAX_RUNS runs. Every other check applies.
+# See docs/check-rules.md, "Entries without a bundle".
+NO_BUNDLE_ENTRIES = ("ubuntu2404",)
+NO_BUNDLE_MIN_RUNS = 3
 # Provisional: a new entry must differ from every other entry in at least
 # this many fields of the full field set.
 MIN_SIBLING_DISTANCE = 2
@@ -216,8 +223,10 @@ def check_entry(base, fp_text, sidecar_text):
     if c is not None:
         if not re.fullmatch(r"\d{1,3}", c):
             errs.append("provenance: runs not an integer")
-        elif not MIN_RUNS <= int(c) <= MAX_RUNS:
-            errs.append("provenance: runs %s is out of range %d to %d" % (c, MIN_RUNS, MAX_RUNS))
+        else:
+            lo = NO_BUNDLE_MIN_RUNS if base in NO_BUNDLE_ENTRIES else MIN_RUNS
+            if not lo <= int(c) <= MAX_RUNS:
+                errs.append("provenance: runs %s is out of range %d to %d" % (c, lo, MAX_RUNS))
     for k in ("probe_version", "derive_version"):
         if k in prov and not VERSION_RE.match(prov[k]):
             errs.append("provenance: %s must be N.N.N" % k)
