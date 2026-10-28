@@ -21,5 +21,5 @@ before any public release.
    history, not this working repository.
 7. Full tree scan: scan every file and commit message for private terms,
    addresses, host names and secrets, and confirm a clean result.
-8. Licence and owner account confirmed (CC0 1.0 proposed, not yet chosen).
+8. Licence and owner account confirmed (CC0 1.0 for data and code, including tools/derive).
 9. Owner's go: nothing is public until the owner says so.
