@@ -1,23 +1,21 @@
 # Vendored files
 
-Files under tools/derive/ are vendored from the maintainer's own tooling,
-commit 7a277ee. Python standard library only; nothing in C and no
-third-party source.
+Files under tools/derive/ are vendored from the maintainer's own tooling.
+Python standard library only; nothing in C and no third-party source.
 
-| File | Upstream last change | sha256 (as vendored here) |
-|---|---|---|
-| tools/derive/derive.py | 4c742c2 | 316f8d88f4cc0fee98929a27289a095936465abd23a6296a6a81cd9e23d856b4 |
-| tools/derive/build_db.py | 8305da1 | 8ce8475a650bce04a79ab4a2fb70dd2f7f26a38a9f1e21291a8ade08e246ff67 |
-| tools/derive/check_db.py | d8344eb | e6f7d1fd69ab27e0fe57eff614925eac4b4ee5b604294707e2fa597039bb3eb9 |
-| tools/derive/probespec.py | 16e4ddb | 3e4690bad295a3b54ace74eb5b08682e74a3eaefc61d4fc2ce432ef7f3b45727 |
-| tools/derive/_version.py | f21d165 | bcd896275e2bfdcc39b7fed40ea0d021566f95a74a146c871f66afb0ba4ded58 |
+| File | sha256 (as vendored here) |
+|---|---|
+| tools/derive/derive.py | 316f8d88f4cc0fee98929a27289a095936465abd23a6296a6a81cd9e23d856b4 |
+| tools/derive/build_db.py | 8ce8475a650bce04a79ab4a2fb70dd2f7f26a38a9f1e21291a8ade08e246ff67 |
+| tools/derive/check_db.py | e6f7d1fd69ab27e0fe57eff614925eac4b4ee5b604294707e2fa597039bb3eb9 |
+| tools/derive/probespec.py | 3e4690bad295a3b54ace74eb5b08682e74a3eaefc61d4fc2ce432ef7f3b45727 |
+| tools/derive/_version.py | bcd896275e2bfdcc39b7fed40ea0d021566f95a74a146c871f66afb0ba4ded58 |
 
 ## Licence
 
-The upstream tooling is published under GPL-2.0, and the maintainer is its
-sole author. The licence for this repository is still pending (see NOTICE);
-until it is settled these files stay under GPL-2.0. Relicensing them is the
-maintainer's call and is not done by this change.
+The maintainer is the sole author of these files and has dedicated them to
+the public domain under CC0 1.0 Universal, the same as the rest of this
+repository. See LICENSE and NOTICE.
 
 ## Changes from upstream
 
