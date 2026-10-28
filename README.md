@@ -13,7 +13,7 @@ It is made for people who build decoys, honeypots, scanners and detection tools 
 - `tools/checks/`: contribution checks (Python standard library only)
 - `tools/derive/`: the step that turns a capture bundle into an entry, and builds the release database
 - `tools/scrub.py`: removes identifying details from a raw capture. It is the step used on the project's own captures and is not yet a supported contributor tool
-- `docs/`: check rules and entry format
+- `docs/`: check rules, entry format, and [how to use the database](docs/using.md)
 
 ## What each entry carries
 
